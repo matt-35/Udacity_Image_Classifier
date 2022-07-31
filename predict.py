@@ -7,6 +7,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import tensorflow as tf 
 import tensorflow_hub as hub
+from argparse import ArgumentParser
 
 def load_model(model_path):
     model = tf.keras.models.load_model(model_path, custom_objects={'KerasLayer':hub.KerasLayer})
@@ -60,13 +61,43 @@ def plot_predict(image_path, model, k_predictions, class_names):
 
     return 
 
+def parse_args():
+
+    my_parser = ArgumentParser()
+
+    my_parser.add_argument('image')
+    my_parser.add_argument('model')
+    my_parser.add_argument('--top_k', action='store', type=int, required=False)
+    my_parser.add_argument('--category_names', action='store', type=str, required=False)
+
+    args = my_parser.parse_args()
+
+    image = args.image
+    model = args.model 
+    top_k = args.top_k 
+    class_path = args.category_names
+
+    if top_k == None:
+        top_k = 5 
+    
+    if class_path == None:
+        class_names = load_classes('label_map.json')
+    else:
+        class_names = load_classes(class_path)
+
+    return image, model, top_k, class_names
+
 # %%
 if __name__ == '__main__':
     
-    model = load_model('models/my_model.h5')
+    image_path, model_path, top_k, class_names = parse_args()
+    
+    model = load_model(model_path)
 
-    class_names = load_classes('label_map.json')
+    plot_predict(image_path, model, top_k, class_names)
 
-    image = 'test_images/wild_pansy.jpg'
+# %%
+## Example commands:
 
-    plot_predict(image, model, 5, class_names)
+# python predict.py test_images/wild_pansy.jpg models/my_model.h5
+# python predict.py test_images/cautleya_spicata.jpg models/my_model.h5 --top_k 5 --category_names label_map.json
